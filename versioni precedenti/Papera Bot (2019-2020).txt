@@ -1,0 +1,1131 @@
+import discord
+from discord import Embed
+from discord.ext import commands
+from discord.utils import get
+import asyncio
+from discord.voice_client import VoiceClient
+import sys
+import datetime
+import random
+#import youtube_dl
+import webserver
+from webserver import keep_alive
+import os
+import Image
+
+import pytz
+from pytz import timezone
+
+import json
+
+bot = commands.Bot(command_prefix = 'q!')
+bot.remove_command('help')
+#client = commands.Bot(command_prefix = 'q!')
+#import asyncio
+
+#avatar
+
+players = {}
+
+@bot.event
+async def status_task():
+  await bot.change_presence(activity=discord.Game("q!comandi"))
+  
+
+@bot.event
+async def on_ready():
+    print('Bot is ready!')
+    bot.loop.create_task(status_task())
+
+
+
+@bot.event
+async def on_member_join(member):
+    role = discord.utils.get(member.guild.roles, name='Papera Cittadina')
+    await member.add_roles(role)
+    embed = discord.Embed(description=f"Hey benvenuto/a nell'**Impero delle Papere!** leggi le <#697514940461875200> prima di cominciare a chattare e buona permanenza!\nSeguici anche sui nostri social! [Instagram](https://www.instagram.com/insta_delle_papere/), [Youtube](https://www.youtube.com/channel/UC6qRW-4vV4uMvegskiezdyQ), [Twich](https://www.twitch.tv/paese_delle_papere?sr=a) e [Reddit](https://www.reddit.com/r/PaeseDellePapere/)", color=discord.Color.gold())
+    await member.send(embed=embed)
+
+    channel = bot.get_channel(697514940461875200) #canale delle leggi
+    channel_id = bot.get_channel(697514947126624428) #canale chat
+    embed = discord.Embed(colour=discord.Color.gold(), description=f"Hey! **{member.name}** benvenuto nell'**Impero delle Papere**!\n__Dopo aver letto le__ {channel.mention} __puoi conversare in__ {channel_id.mention}\n\n**Membro numero:** `{len(list(member.guild.members))}`")
+    embed.set_thumbnail(url=f'{member.avatar_url}')
+    embed.set_author(name=f'{member}', icon_url=f'{member.avatar_url}')
+    embed.set_footer(text=f'{member.guild}', icon_url=f'{member.guild.icon_url}')
+    embed.timestamp = datetime.datetime.utcnow()
+    embed.add_field(name='**I nostri social!**', value=f'[Instagram](https://www.instagram.com/insta_delle_papere/) [Youtube](https://www.youtube.com/channel/UC6qRW-4vV4uMvegskiezdyQ) [Twich](https://www.twitch.tv/paese_delle_papere?sr=a) [Reddit](https://www.reddit.com/r/PaeseDellePapere/) [PayPal](https://paypal.me/imperodellepapere)')
+
+    channel = bot.get_channel(697514939685929030)
+    await channel.send(embed=embed)
+
+#close
+
+@bot.event
+async def on_member_remove(member):
+    channel = bot.get_channel(697514939685929030)
+    embed = discord.Embed(colour=discord.Color.gold(), description=f'Rip! **{member}** ha deciso di lasciarci :pensive:')
+    channel = bot.get_channel(697514939685929030)
+    await channel.send(embed=embed)
+
+
+
+#@bot.event
+#async def on_member_join(member):
+    #print(f'{member} has joined a server.')
+
+#@bot.event
+#async def on_member_remove(member):
+    #print(f'{member} has left a server.')
+
+@bot.command()
+async def help(ctx):
+    await ctx.send(f'{ctx.message.author.mention} No no no!\nnon cosi bro, se voi vedere tutti i nostri bellissimi comandi devi digitare `q!comandi`')
+
+@bot.command()
+async def quack(ctx):
+    await ctx.send(f'KUAK KUAK! {round(bot.latency * 1000)}ms')
+
+@bot.command()
+async def link(ctx):
+    await ctx.send(f'https://discord.gg/MWdU9Bq')
+
+@bot.command()
+async def off(ctx):
+    embed = discord.Embed(
+    title='BOT OFFLINE',
+    description='**Il bot è stato messo offline per manutenzione, ci scusiamo per il disagio.**',
+    colour=discord.Color.gold())
+    await ctx.send(embed=embed)
+
+
+@bot.command()
+async def on(ctx):
+    embed = discord.Embed(
+    title='BOT ONLINE',
+    description="**grazie per l'attesa**",
+    colour=discord.Color.gold())
+    await ctx.send(embed=embed)
+
+#@bot.command()
+#async def report(ctx, member : discord.Member, *, reason):
+    #if not reason:
+        #await ctx.send('inserisci una motivazione')
+        #return
+    #elif ctx.message.author.guild_permissions.kick_members:
+        #if reason is reason:
+            
+            #await member.send(f'Sei stato reportato per {reason}')
+            #channel = bot.get_channel(655037954443575296)
+            #await channel.send('```Report```')
+            #await channel.send(f'**Utente:** => {member.mention}')
+            #await channel.send(f'**Moderatore:** => ' +ctx.message.author.mention)
+            #await channel.send(f'**Motivo:** => {reason}')
+
+@bot.command()
+async def kick(ctx, member : discord.Member, *, reason=None):
+    if member.guild_permissions.kick_members:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Impossibile espellere un Moderatore/Admin.**',
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+    elif ctx.message.author.guild_permissions.kick_members:
+        if reason is None:
+            await ctx.send(f'{ctx.message.author.mention} Inserisci una motivazione perfavore.\n`q!kick @user motivo`')
+        else:
+            
+            await member.send(f"Sei stato espulso dall'**Impero delle Papere** per il seguente motivo: **{reason}**")
+            await member.kick(reason=reason)
+            embed = discord.Embed(
+            title='Kick eseguito con successo!', 
+            colour=discord.Color.green())
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Kick**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+    elif ctx.message.author.guild_permissions.kick_members:
+        if reason is reason:
+            
+            await member.send(f"Sei stato espulso dall'**Impero delle Papere** per il seguente motivo: **{reason}**")
+            await member.kick(reason=reason)
+            embed = discord.Embed(
+            title='Kick eseguito con successo!', 
+            colour=discord.Color.green())
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Kick**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+            
+        else:
+            await member.kick(reason=reason)
+            await ctx.message.delete()
+            await member.send(f"Sei stato espulso dall'**Impero delle Papere** per il seguente motivo: **{reason}**")
+            embed = discord.Embed(
+            title='Kick eseguito con successo!', 
+            colour=discord.Color.green())
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Kick**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+           
+    else:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Non hai i permessi speciali.**', 
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+    
+
+
+@bot.command()
+async def ban(ctx, member : discord.Member, *, reason=None):
+    if member.guild_permissions.kick_members:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Impossibile bannare un Moderatore/Admin.**',
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+    elif ctx.message.author.guild_permissions.ban_members:
+        if reason is None:
+            await ctx.send(f'{ctx.message.author.mention} Inserisci una motivazione perfavore.\n`q!ban @user motivo`')
+        else:
+        
+            await member.ban(reason=reason, delete_message_days=0)
+            embed = discord.Embed(
+            title='Ban eseguito con successo!', 
+            colour=discord.Color.green())
+            embed.set_image(url='https://images-ext-2.discordapp.net/external/4ys0MOOEm--jMf72uYCY7gjTKqG5pzM2vPxIG3xIIlY/https/i.imgur.com/VAXy9IN.gif')
+            await ctx.send(embed=embed)
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Ban**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+    elif ctx.message.author.guild_permissions.ban_members:
+        if reason is reason:
+            
+            await member.send(f"Sei stato bannato dall'**Impero delle Papere** per il seguente motivo: **{reason}**")
+            await member.send('*Se ritieni di essere stato bannato ingiustamente contatta un admin*')
+        
+            await member.ban(reason=reason, delete_message_days=0)
+            embed = discord.Embed(
+            title='Ban eseguito con successo!', 
+            colour=discord.Color.green())
+            embed.set_image(url='https://images-ext-2.discordapp.net/external/4ys0MOOEm--jMf72uYCY7gjTKqG5pzM2vPxIG3xIIlY/https/i.imgur.com/VAXy9IN.gif')
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Ban**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+        else:
+        
+            await member.ban(reason=reason)
+            embed = discord.Embed(
+            title='Ban eseguito con successo!', 
+            colour=discord.Color.green())
+            embed.set_image(url='https://images-ext-2.discordapp.net/external/4ys0MOOEm--jMf72uYCY7gjTKqG5pzM2vPxIG3xIIlY/https/i.imgur.com/VAXy9IN.gif')
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Ban**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+    else:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Non hai i permessi speciali.**', 
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+    
+@bot.command()
+@commands.has_any_role('Generale', 'Senato Imperiale', 'Imperatori')
+async def unban(ctx, *, member):
+    banned_users = await ctx.guild.bans()
+    member_name, member_discriminator = member.split('#')
+
+    for ban_entry in banned_users:
+        user = ban_entry.user
+        if (user.name, user.discriminator) == (member_name, member_discriminator):
+            await ctx.guild.unban(user)
+            await ctx.send(f'{user.mention} è stato sbannato.')
+            channel = bot.get_channel(697515044593729586)
+            return
+
+
+async def countbangs(user):
+  with open("JSON/countbang.json","r") as f:
+    bang = json.load(f)
+  
+  if str(user) in bang:
+    return False
+  
+  else:
+    bang[str(user)] = {}
+    bang[str(user)]["countbang"] = 0
+
+  
+  with open("JSON/countbang.json","w") as f:
+    json.dump(bang,f)
+
+
+
+@bot.command()
+async def bang(ctx, member : discord.Member, *, reason=None):
+    if member.guild_permissions.kick_members:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Impossibile eseguire questo comando su un Moderatore/Admin.**',
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+    elif ctx.message.author.guild_permissions.kick_members:
+        if reason is None:
+            await ctx.send(f'{ctx.message.author.mention} Inserisci una motivazione perfavore.\n`q!bang @user motivo`')
+        else:
+          
+            role = discord.utils.get(ctx.guild.roles, name='Prigioniero')
+            await member.add_roles(role)
+        
+            role = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            await member.remove_roles(role)
+            
+            channel = bot.get_channel(697514996627931236) #canale della prigione
+
+            embed = discord.Embed(
+            title="L'utente è stato arrestato!",
+            description=f"**L'utente è chiuso in cella {channel.mention}**",
+            colour=discord.Color.green())
+            embed.set_image(url='https://cdn.discordapp.com/attachments/497082051674112011/660631922279579649/tenor.gif')
+            await ctx.send(embed=embed)
+
+            await member.send(f"Sei stato mutato dall'**Impero delle Papere** per il seguente motivo: **{reason}**")
+            await member.send('*A breve valuteremo  la tua situazione, e decideremo la tua sanzione oppure se smutarti.*')
+            await member.send('*Se ritieni di essere stato mutato ingiustamente contatta un admin*')
+
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Bang**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+
+            with open("JSON/countbang.json") as f:
+              bang = json.load(f)
+            
+            bang[str(user)]["countbang"] += 1
+
+
+            logchannel = bot.get_channel(718198645475770508)
+
+            logEmbed = Embed(
+              color = discord.Color.blue()
+            )
+
+            logEmbed.set_author(name=f'{member} è stato arrestato!', icon_url=member.avatar_url)
+            
+            if bang[str(user)]["countbang"] == 1:
+              logEmbed.add_field(name=f'Numero di arresti attuali', value=f'```{bang[str(user)]["countbang"]} arresto``` ', inline=False)
+            
+            else:
+              logEmbed.add_field(name=f'Numero di arresti attuali', value=f'```{bang[str(user)]["countbang"]} arresti``` ', inline=False)
+            
+            logEmbed.add_field(name='Data dell\'ultimo arresto', value=f'**{ctx.message.created_at.astimezone(timezone("Europe/Rome")).strftime("%#d/%#m/%Y, %H:%M:%S")}**')
+
+            logEmbed.add_field(name='Motivazione', value=reason, inline=False)
+
+            logEmbed.add_field(name='Autore dell\'Arresto', value=ctx.author.mention, inline=False)
+            
+            with open("JSON/countbang.json","w") as f:
+              json.dump(bang,f)
+            
+            await logchannel.send(embed=logEmbed)
+    
+    elif ctx.message.author.guild_permissions.kick_members:
+        if reason is reason:
+            
+            
+            await member.send(f"Sei stato mutato dall'**Impero delle Papere** per il seguente motivo: **{reason}**")
+            await member.send('*A breve valuteremo  la tua situazione, e decideremo la tua sanzione oppure se smutarti.*')
+            await member.send('*Se ritieni di essere stato mutato ingiustamente contatta un admin*')
+            
+            role = discord.utils.get(ctx.guild.roles, name='Prigioniero')
+            await member.add_roles(role)
+        
+            role = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            
+            await member.remove_roles(role)
+            channel = bot.get_channel(697514996627931236) #canale della prigione
+            embed = discord.Embed(
+            title="L'utente è stato arrestato!",
+            description=f"**L'utente è chiuso in cella {channel.mention}**",
+            colour=discord.Color.green())
+            embed.set_image(url='https://cdn.discordapp.com/attachments/497082051674112011/660631922279579649/tenor.gif')
+            await ctx.send(embed=embed)
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Bang**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+            
+        else:
+            
+            
+            role = discord.utils.get(ctx.guild.roles, name='Prigioniero')
+            await member.add_roles(role)
+        
+            role = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            await member.remove_roles(role)
+            channel = bot.get_channel(697514996627931236) #canale della prigione
+            embed = discord.Embed(
+            title="L'utente è stato arrestato!",
+            description=f"**L'utente è chiuso in cella {channel.mention}**",
+            colour=discord.Color.green())
+            embed.set_image(url='https://cdn.discordapp.com/attachments/497082051674112011/660631922279579649/tenor.gif')
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Bang**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+    else:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Non hai i permessi speciali.**', 
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+
+
+
+       
+@bot.command()
+async def libera(ctx, member : discord.Member, *, reason=None):
+  if member.guild_permissions.kick_members:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Impossibile eseguire questo comando su un Moderatore/Admin.**',
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+  elif ctx.message.author.guild_permissions.kick_members:
+        if reason is None:
+            
+            role = discord.utils.get(ctx.guild.roles, name='Prigioniero')
+            await member.remove_roles(role)
+
+            role = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            await member.add_roles(role)
+            await member.send(f"Sei stato smutato dall'**Impero delle Papere**\nPuoi tornare a chattare nel server!")
+
+            embed = discord.Embed(
+            title="L'utente è libero!",
+            colour=discord.Color.green())
+            embed.set_image(url='https://cdn.discordapp.com/attachments/497081389519339521/658751019173281803/image0.gif')
+            await ctx.send(embed=embed)
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Libera**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+        
+        else:
+            
+            
+            
+            role = discord.utils.get(ctx.guild.roles, name='Prigioniero')
+            await member.remove_roles(role)
+
+            role = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            await member.add_roles(role)
+            await member.send(f"Sei stato smutato dall'**Impero delle Papere**\nPuoi tornare a chattare nel server!")
+            
+            embed = discord.Embed(
+            title="L'utente è libero!",
+            colour=discord.Color.green())
+            embed.set_image(url='https://cdn.discordapp.com/attachments/497081389519339521/658751019173281803/image0.gif')
+            await ctx.send(embed=embed)
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Libera**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+
+
+@bot.command()
+async def warn(ctx, member : discord.Member, *, reason=None):
+  if reason is None:
+
+    await ctx.send(f'**{member}** è stato warnato.')
+    channel = bot.get_channel(697515041867694170)
+    embed = Embed(
+      title = 'Warn ricevuto!',
+      color = discord.Color.green()
+    )
+
+    embed.set_thumbnail(url=ctx.author.avatar_url)
+    
+    embed.add_field(name='Autore warn', value='**{}**'.format(ctx.author), inline=False)
+    
+    embed.add_field(name='Warnato', value='**{}**'.format(member), inline=False)
+    
+
+    embed.add_field(name='Motivazione', value='Nessuna motivazione inserita', inline=False)
+            
+    data = ctx.message.created_at
+    data_bella = data.astimezone(timezone('Europe/Rome'))
+    data_bellissima = data_bella.strftime('%#d/%#m/%Y, %H:%M:%S')
+
+    embed.add_field(name='Data', value='{}'.format(data_bellissima), inline=False)
+
+    msg = await channel.send(embed=embed)
+    await msg.add_reaction('✅')
+
+ 
+    def check(reaction, user):
+      return user != bot.user and str(reaction.emoji) == '✅'
+    
+    try:
+      user, reaction = await bot.wait_for('reaction_add', timeout=86400.00, check=check)
+
+      await channel.send('Warn Risolto!')
+    except asyncio.TimeoutError:
+      return
+    
+    
+    
+    
+  
+  else:
+    await ctx.send(f'**{member}** è stato warnato.')
+    channel = bot.get_channel(697515041867694170)
+    embed = Embed(
+      title = 'Warn ricevuto!',
+      color = discord.Color.green()
+    )
+
+    embed.set_thumbnail(url=ctx.author.avatar_url)
+    
+    embed.add_field(name='Autore warn', value='**{}**'.format(ctx.author), inline=False)
+    
+    embed.add_field(name='Warnato', value='**{}**'.format(member), inline=False)
+    
+
+    embed.add_field(name='Motivazione', value='{}'.format(reason), inline=False)
+            
+    data = ctx.message.created_at
+    data_bella = data.astimezone(timezone('Europe/Rome'))
+    data_bellissima = data_bella.strftime('%#d/%#m/%Y, %H:%M:%S')
+
+    embed.add_field(name='Data', value='{}'.format(data_bellissima), inline=False)
+
+    msg = await channel.send(embed=embed)
+    await msg.add_reaction('✅')
+
+    def check(reaction, user):
+      return user != bot.user and str(reaction.emoji) == '✅'
+
+    try:
+      reaction, user = await bot.wait_for('reaction_add', timeout=86400.00, check=check)
+
+      await channel.send('Warn Risolto!')
+    except asyncio.TimeoutError:
+      return
+    
+
+
+#@bot.command(pass_context=True)
+#async def ban_role(ctx, *,role_name):
+  #role = discord.utils.get(ctx.message.guild.roles, name=role_name)
+  #if role:
+    #try:
+      #await Role.delete(ctx.message.guild, role)
+      #await ctx.send("The role {} has been deleted!".format(role.name))
+    #except discord.Forbidden:
+      #await ctx.send("Missing Permissions to delete this role!")
+  #else:
+    #await ctx.send("The role doesn't exist!")
+
+
+@bot.command()
+@commands.has_role('Papera Bot permissions')
+async def notHide(ctx):
+  Papera_Cittadina = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+  await ctx.channel.set_permissions(Papera_Cittadina, read_messages=True)
+  embed = discord.Embed(title='Stanza accessibile a tutti', color=discord.Color.green())
+  await ctx.send(embed=embed)
+
+
+
+@bot.command()
+@commands.has_role('Papera Bot permissions')
+async def hide(ctx):
+  Papera_Cittadina = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+  await ctx.channel.set_permissions(Papera_Cittadina, read_messages=False)
+  embed = discord.Embed(title='Stanza nascosta :closed_lock_with_key:', color=discord.Color.green())
+  await ctx.send(embed=embed)
+
+
+@bot.command()
+@commands.has_role('Papera Bot permissions')
+async def close(ctx, *, reason=None):
+        if reason is None:
+            #await ctx.send('Il comando è stato disattivato per manutenzione.')
+            #await ctx.message.delete()
+            Papera_Cittadina = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            #await ctx.remove_roles(role)
+            await ctx.channel.set_permissions(Papera_Cittadina, send_messages=False)
+            embed = discord.Embed(title='Stanza chiusa :closed_lock_with_key:', color=discord.Color.green())
+            await ctx.send(embed=embed)
+            #await ctx.send("**Stanza chiusa!**")
+        
+            channel = bot.get_channel(697515044593729586) #stanza log
+            embed = discord.Embed(title='Moderazione', color=discord.Color.blue())
+            embed.add_field(name='**Comando eseguito**', value='**Close**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name="**Canale**", value=f"{ctx.channel.mention}")
+            await channel.send(embed=embed)
+
+        else:
+            Papera_Cittadina = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+            await ctx.channel.set_permissions(Papera_Cittadina, send_messages=False)
+            embed = discord.Embed(title='Stanza chiusa :closed_lock_with_key:', description=f'**Motivo:** *{reason}*' ,color=discord.Color.green())
+            await ctx.send(embed=embed)
+            
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(title='Moderazione', color=discord.Color.blue())
+            embed.add_field(name='**Comando eseguito**', value='**Close**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name="**Canale**", value=f"{ctx.channel.mention}")
+            await channel.send(embed=embed)
+
+@bot.command()
+@commands.has_role('Papera Bot permissions')
+async def open(ctx):
+    #await ctx.send('Il comando è stato disattivato per manutenzione.')
+    #await ctx.message.delete()
+    Papera_Cittadina = discord.utils.get(ctx.guild.roles, name='Papera Cittadina')
+    await ctx.channel.set_permissions(Papera_Cittadina, send_messages=True)
+    embed = discord.Embed(title='Stanza aperta :unlock:', color=discord.Color.green())
+    await ctx.send(embed=embed)
+
+    channel = bot.get_channel(697515044593729586)
+    embed = discord.Embed(title='Moderazione', color=discord.Color.blue())
+    embed.add_field(name='**Comando eseguito**', value='**Open**')
+    embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+    embed.add_field(name="**Canale**", value=f"{ctx.channel.mention}")
+    await channel.send(embed=embed)
+
+    #await ctx.send("**Stanza aperta!**")
+
+
+
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def clear(ctx, amount: int):
+    await ctx.message.delete()
+    await ctx.channel.purge(limit=amount)
+
+    embed = discord.Embed(title=f'` {amount} ` **messaggi sono stati cancellati!**', colour=discord.Color.green())
+    embed.set_author(name=f'Questo messaggio verrà cancellato dopo 5 secondi', icon_url=ctx.author.avatar_url)
+    embed.set_image(url='https://images-ext-2.discordapp.net/external/4ys0MOOEm--jMf72uYCY7gjTKqG5pzM2vPxIG3xIIlY/https/i.imgur.com/VAXy9IN.gif')
+        #embed.set_footer(text=f'Questo messaggio verrà cancellato dopo 10 secondi', icon_url=ctx.author.avatar_url)
+    await ctx.send(embed=embed, delete_after=5)
+        
+
+
+@bot.command(aliases=['user-info'])
+async def user_info(ctx, member : discord.Member=None):
+    member = ctx.author if not member else member
+
+    roles = [role for role in member.roles]
+
+    embed = discord.Embed(colour=discord.Colour.blue(), timestamp=ctx.message.created_at)
+                         #colour=member.color
+    embed.set_author(name=f"Carta d'identità del/della signor/a {member}")
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.set_footer(text=f'Comando eseguito da {ctx.author}', icon_url=ctx.author.avatar_url)
+
+    embed.add_field(name='ID:', value=member.id)
+    embed.add_field(name='Nome utente:', value=member.display_name)
+    embed.add_field(name='Account creato il:', value=member.created_at.strftime('%a, %#d %B %Y, %I:%M %p UTC'))
+    embed.add_field(name='Entrato nel paese il:', value=member.joined_at.strftime('%a, %#d %B %Y, %I:%M %p UTC'))
+
+    "embed.add_field(name=f'Ruoli ({len(roles)}) :', value='\n\n'.join([role.mention for role in roles]))"
+    embed.add_field(name='Ruolo Top:', value=member.top_role.mention)
+
+    embed.add_field(name="Bot:", value=member.bot)
+
+    await ctx.send(embed=embed)
+
+
+@bot.command(pass_context=True)
+async def comandi(ctx):
+    embed = discord.Embed(
+    title='Lista dei comandi',
+    description='**Scegli una categoria.**', 
+    colour=discord.Color.blue())
+    embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/651185347597828099/678964560673374208/quack.png')
+    embed.add_field(name='**Moderazione**', value='`q!moderazione`')
+    embed.add_field(name='**Strumenti**', value='`q!strumenti`')
+    embed.add_field(name='**Giochi**', value='`q!giochi`')
+    await ctx.send(embed=embed)
+
+
+@bot.command(pass_context=True)
+async def giochi(ctx):
+    embed = discord.Embed(
+    title='Lista dei comandi [GIOCHI]',
+    description='**Attenzione! leggere attentamente la lista.**', 
+    colour=discord.Color.blue())
+    embed.add_field(name='**Say**', value='`q!say <messaggio>`')
+    embed.add_field(name='**8Ball**', value='`q!8ball <domanda>`')
+    embed.add_field(name='**Dick**', value='`q!dick @user`')
+    embed.add_field(name='**Calcolatrice**', value='`q!calc 1 + 2`')
+    embed.add_field(name='**Dado**', value='`q!dado`')
+    embed.add_field(name='**Testa o Croce**', value='`q!flip-coin`')
+    embed.add_field(name='**Inno del Regno**', value='`q!inno paperiano`')
+    embed.set_thumbnail(url=f'https://cdn.discordapp.com/attachments/654396431381037077/664603230650499102/coin_game.png')
+    await ctx.send(embed=embed)
+
+@bot.command(pass_context=True)
+async def strumenti(ctx):
+    embed = discord.Embed(
+    title='Lista dei comandi [STRUMENTI]',
+    description='**Attenzione! leggere attentamente la lista.**', 
+    colour=discord.Color.blue())
+    embed.add_field(name='**Link**', value='`q!link` **serve per linkare il link permanente del server.**')
+    embed.add_field(name='**Quack**', value='`q!quack` **un comando di verifica di connessione.**')
+    embed.add_field(name='**Info**', value='`q!user-info @user` o `q!user-info`')
+    embed.add_field(name='**Avatar**', value='`q!avatar @user` o `q!avatar`')
+    embed.add_field(name='**Blog on**', value='`q!add-blog` **assegna il ruolo dei blog.**')
+    embed.add_field(name='**Blog off**', value='`q!off-blog` **toglie il ruolo dei blog.**')
+    embed.add_field(name='**Comandi Calcolatrice**', value='`q!help-calc` **vedere tutti i comandi della calcolatrice**')
+    embed.set_thumbnail(url=f'https://cdn.discordapp.com/attachments/654396431381037077/664603756322619422/lente.png')
+    await ctx.send(embed=embed)
+
+
+@bot.command(pass_context=True)
+async def moderazione(ctx):
+        embed = discord.Embed(
+        title='Lista dei comandi [MODERAZIONE]',
+        description='**Attenzione! leggere attentamente la lista.**', 
+        colour=discord.Color.blue())
+        embed.add_field(name='**Warn**', value='q!warn @user <motivo>')
+        embed.add_field(name= '**schiavizza**', value='`q!schiavizza @user`')
+        embed.add_field(name='**Ban**', value='`q!ban @user <motivo>`',)
+        embed.add_field(name='**Unban**', value="`q!unban User#0000` **rimuove il ban a traverso il l'username e target dell'utente bannato.**")
+        embed.add_field(name='**Kick**', value='`q!kick @user <motivo>`')
+        embed.add_field(name='**Bang**', value='`q!bang @user <motivo>` **questo comando farà mettere gli utenti che si comportano nel modo sbagliato in prigione.**')
+        embed.add_field(name='**Libera**', value='`q!libera @user` **questo comando libererà gli utenti dalla prigione.**')
+        embed.add_field(name='**Clear**', value='`q!clear <numero>` **il bot cancellerà i messaggi in base alla cifra numerica imposta.**')
+        embed.add_field(name='**Close**', value='`q!close <motivo>` **chiude la stanza a tutti gli utenti.**\n*motivo non obbligatorio.*')
+        embed.add_field(name='**Open**', value='`q!open` **riapre la stanza a tutti gli utenti.**')
+        embed.add_field(name='**Hide**', value='`q!hide` **nasconde una stanza a tutti gli utenti.**')
+        embed.set_thumbnail(url=f'https://cdn.discordapp.com/attachments/654396431381037077/664597902840037376/scudo.png')
+        
+
+        await ctx.send(embed=embed)
+
+
+
+@bot.command()
+async def color(ctx):
+    embed = discord.Embed(
+    title='Red',
+    colour=discord.Color.red())
+    embed.add_field(name='Errori', value=':no_entry_sign:')
+    await ctx.send(embed=embed)
+
+    embed = discord.Embed(
+    title='Green',
+    colour=discord.Color.green())
+    embed.add_field(name='Comandi eseguiti', value=':white_check_mark:')
+    await ctx.send(embed=embed)
+
+    embed = discord.Embed(
+    title='Blue',
+    colour=discord.Color.blue())
+    embed.add_field(name='Informazioni', value=':information_source:')
+    await ctx.send(embed=embed)
+
+    embed = discord.Embed(
+    title='Yellow',
+    colour=discord.Color.gold())
+    embed.add_field(name='Notifiche e aggiornamenti', value=':bell:')
+    await ctx.send(embed=embed)
+
+    embed = discord.Embed(
+    title='Purple',
+    colour=discord.Color.purple())
+    embed.add_field(name='Giochi', value=':video_game:')
+    await ctx.send(embed=embed)
+
+#@bot.command()
+#async def msg(ctx):
+    #channel = bot.get_channel(654396431381037077)
+    #await channel.send('hello')
+
+
+@bot.command(pass_context=True, aliases=['add-blog'])
+#@commands.has_role("Admin") # This must be exactly the name of the appropriate role
+async def blog_role_on(ctx):
+    
+    member = ctx.message.author
+    role = discord.utils.get(ctx.guild.roles, name='Abbonato-Blogger')
+    await member.add_roles(role)
+    await ctx.send('hai aggiunto il ruolo **Abbonato-Blogger**')
+
+@bot.command(pass_context=True, aliases=['off-blog'])
+#@commands.has_role("Admin") # This must be exactly the name of the appropriate role
+async def blog_role_off(ctx):
+    
+    member = ctx.message.author
+    role = discord.utils.get(ctx.guild.roles, name='Abbonato-Blogger')
+    await member.remove_roles(role)
+    await ctx.send('hai tolto il ruolo **Abbonato-Blogger**')
+
+@bot.command(pass_context=True, aliases=['business'])
+#@commands.has_role("Admin") # This must be exactly the name of the appropriate role
+async def Business_role_on(ctx):
+    
+    member = ctx.message.author
+    role = discord.utils.get(ctx.guild.roles, name='Business')
+    await member.add_roles(role)
+    await ctx.send('hai aggiunto il ruolo **Business**')
+
+@bot.command(pass_context=True, aliases=['off-business'])
+#@commands.has_role("Admin") # This must be exactly the name of the appropriate role
+async def Business_role_off(ctx):
+    
+    member = ctx.message.author
+    role = discord.utils.get(ctx.guild.roles, name='Business') 
+    await member.remove_roles(role)
+    await ctx.send('hai tolto il ruolo **Business**')
+
+ 
+@bot.command()
+@commands.has_role('Papera Bot permissions')
+async def say(ctx, *,msg):
+    await ctx.message.delete()
+    await ctx.send(msg)
+    channel = bot.get_channel(697515044593729586)
+    embed = discord.Embed(title='q!say command log', description=f'**comando usato da** = {ctx.message.author.mention}\n**messaggio scritto** = {msg}', color=discord.Color.blue()) 
+    await channel.send(embed=embed)
+
+ 
+"""@say.error
+async def say_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+      await pass"""
+
+"""@bot.event
+async def on_message_error(ctx, error):
+    if isinstance(error, discord.ext.commands.errors.MissingRole):
+        await ctx.send("errore")"""
+
+@bot.command()
+async def dick(ctx, member : discord.Member=None):
+    
+    member = ctx.author if not member else member
+    
+    embed = discord.Embed(colour=discord.Color.purple())
+    responses = ['8===D', '8D', '8=D', '8=======D', '8============D', '8====D', '*troppo piccolo da vedere*', '8=======================D', '8==8', '*X=||=D', '8===>', 'S̷̡̛͍̭̭̩͔͎̬͙̽̄͆̈́̃͛̈̊̀a̷̧̖͇̥̦͕͎̺͙̲̱͊̋̊͊̕̚Ş̶̡͓̪͇̹̙̦̥̰̪̱̥̇͒̏̔́̆͆̀͋͘͜']
+    embed.add_field(name=f'**Il cazzo di {member}**', value=f'{random.choice(responses)}')
+    await ctx.send(embed=embed)
+    #await ctx.send(f'**Il cazzo di {member.mention}**\n {random.choice(responses)}')
+
+
+@bot.command(aliases=['8ball'])
+async def _8ball(ctx, *, question):
+    embed = discord.Embed(colour=discord.Color.purple())
+    responses = ['è certo.',
+                'certamentee.. no :)',
+                'io ne dubito (.-.)',
+                'decisamente, si!',
+                'puoi contarci!',
+                'per come la vedo io... si(?)',
+                'molto probabile.',
+                'mmh.. no.',
+                'che ne so io, chiedi a jak',
+                'non posso confermare questo.',
+                "vedo del menefregismo in te.. fregatene ||e non rompermi i cogl-||",
+                'bla bla bla',
+                'cazzate',
+                'sti cazzi',
+                'sì',
+                'no',
+                'non so come risponderti quindi me ne uscirò con qualche cazzata come fanno i veggenti',
+                'sì, ma anche no.',
+                'no, ma anche sì.',
+                'sas',
+                '4 parole:\nnon\nchiedere\na\njak',
+                'che cazzo vuoi da me, basta non voglio più fare la sfera di cristallo per sto cazzo di server',
+                'sarai più fortunato la prossima volta.',
+                'guarda io non lo so, chiedi a jak per corstesia',
+                'ne dubito fortemente.',
+                '**TEMPO SCADUTO**, inserire moneta $',
+                'sono un bot, non un veggente',
+                'la vera domanda è: perché lo chiedi a me?',
+                'guarda io non lo so, ma credo che neanche jak lo saprebbe. chiedi a nerrr',
+                'odio questo lavoro, era meglio pulire i cessi del regno',
+                "l'importante è crederci", 
+                'credo che anon lo saprebbe', 
+                'questa domanda è più stupida di jak'] 
+    embed.add_field(name=f'**Domanda:** {question}', value=f'**Risposta:** {random.choice(responses)}')
+    embed.set_thumbnail(url=f'https://cdn.discordapp.com/attachments/654396431381037077/664618964990689325/8BALL.png')
+    embed.set_footer(text=f'Domanda chiesta da {ctx.author}', icon_url=ctx.author.avatar_url)
+    await ctx.send(embed=embed)
+    #await ctx.send(f'**Domanda:** {question}\n**Risposta:** {random.choice(responses)}')
+
+
+
+@bot.command()
+async def avatar(ctx, member : discord.Member=None):
+
+    member = ctx.author if not member else member
+
+    show_avatar = discord.Embed(
+        title=f'{member}', colour = discord.Color.blue()
+    )
+    show_avatar.set_image(url='{}'.format(member.avatar_url))
+    await ctx.send(embed=show_avatar)
+
+@bot.command()
+async def dado(ctx):
+    risposte = ['1','2','3','4','5','6']
+    await ctx.send(f'{random.choice(risposte)}')
+
+@bot.command(aliases=['flip-coin'])
+async def flip_coin(ctx):
+    embed = discord.Embed(title='Flip coin', colour=discord.Color.purple())
+    responses = ['https://cdn.discordapp.com/attachments/734403149946683436/764241905130668082/papera_coin.png','https://cdn.discordapp.com/attachments/734403149946683436/764241936668164106/papera_coin_2.png']
+    embed.set_image(url=f'{random.choice(responses)}')
+    await ctx.send(embed=embed)
+
+#@bot.command(case_insensitive=True, aliases=["calc", "math"])
+#@commands.cooldown(rate=Cooldown.maxcommands, per=Cooldown.seconds, type=Cooldown.mode)
+#async def calculate(ctx, *, operation=None):
+    #try:
+        #operation = eval(operation)
+    #except ZeroDivisionError:
+        #await ctx.send(":point_right: **Error: division by zero!**")
+        #return
+    #except:
+        #await ctx.send(":thumbsdown: **Error: expression could not be calculated!**")
+        #return
+    #await ctx.send(":1234: **The answer to your calculation is: **`{}`**!**".format(operation))
+
+@bot.command(case_insensitive=True, aliases=['calc'])
+async def calculator(ctx, *,operation=None):
+    try:
+        operation = eval(operation)
+    except ZeroDivisionError:
+        await ctx.send('Ma sei coglione o cosa?\n1- è impossibile\n2- IN QUESTO MODO MI MANDI IN CRASH!!!')
+        return
+    except:
+        await ctx.send('**Errore** controlla i valori o i simboli che hai usato\n*Se hai qualche difficoltà digita* `q!help-calc`')
+        return
+    embed = discord.Embed(description='**La risposta è** ```{}```'.format(operation) ,colour=discord.Color.purple())
+    embed.set_thumbnail(url=f'https://cdn.discordapp.com/attachments/654396431381037077/664611797638184961/calc.png')
+    await ctx.send(embed=embed)
+
+@bot.command(aliases=['help-calc'])
+async def help_calc(ctx):
+    await ctx.send(f'{ctx.message.author.mention} Controlla nella sezione Messaggi Privati.')
+    member = ctx.message.author
+    embed = discord.Embed(
+    title='Lista dei comandi [CALCOLATRICE]', 
+    colour=discord.Color.blue())
+    embed.add_field(name='**Addizione**', value='`q!calc 1 + 1`')
+    embed.add_field(name='**Sottrazione**', value='`q!calc 2 - 1`')
+    embed.add_field(name='**Moltiplicazione**', value='`q!calc 2 * 2`')
+    embed.add_field(name='**Divisione**', value='`q!calc 4 / 2`')
+    embed.set_thumbnail(url=f'https://cdn.discordapp.com/attachments/654396431381037077/664613989501894676/Helpcalc.png')
+    await member.send(embed=embed)
+
+
+@bot.command()
+@commands.has_any_role('Agente Paperoso', 'Guardia Imperiale', 'Tenente Colonnello', 'Generale', 'Senato Imperiale', 'Imperatori')
+async def schiavizza(ctx, member : discord.Member, *, reason=None):
+   
+        if reason is None:
+            await ctx.send(f'{ctx.message.author.mention} Inserisci da chi è stato schiavizzato questo utente e il costo perfavore.\n`q!schiavizza @user dati` \n esempio: \n `q!schiavizza @baennj#8681 è stata acquistata da @jacopomaster all asta ed è costata 20 cent`')
+
+        else:
+            
+            await member.send(f'Sei stato schiavizzato nel **{ctx.guild.name}** con le seguenti informazioni: **{reason}**')
+            await member.send('*Se ritieni di essere stato schiavizzato senza motivo ingiustamente contatta il Senato Imperiale o gli Imperatori*')
+            role = discord.utils.get(ctx.guild.roles, name='Schiavo')
+            await member.add_roles(role)
+ 
+  
+            embed = discord.Embed(
+            title="L'utente è stato schiavizzato!",
+            description=f"**L'utente è ora uno schiavo**",
+            colour=discord.Color.green())
+            await ctx.send(embed=embed)
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**Schiavizza**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Dati**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+   
+@bot.command()
+async def offschiavo(ctx, member : discord.Member, *, reason=None):
+    if member.guild_permissions.manage_roles:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Impossibile eseguire questo comando su un Moderatore/Admin.**',
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+    elif ctx.message.author.guild_permissions.manage_roles:
+        if reason is None:
+            
+            
+            await member.send(f'Non sei più schiavo nel **Paese delle Papere [OFFICIAL]**\nPuoi tornare ad essere libero!')
+            role = discord.utils.get(ctx.guild.roles, name='Schiavo')
+            await member.remove_roles(role)
+
+            embed = discord.Embed(
+            title="L'utente è libero dalla schiavitù!",
+            colour=discord.Color.green())
+     
+            await ctx.send(embed=embed)
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**off-schiavo**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+        
+        else:
+            
+            
+            
+            role = discord.utils.get(ctx.guild.roles, name='Schiavo')
+            await member.remove_roles(role)
+
+   
+
+            embed = discord.Embed(
+            title="L'utente è libero dalla schiavitù!",
+            colour=discord.Color.green())
+
+            await ctx.send(embed=embed)
+
+            channel = bot.get_channel(697515044593729586)
+            embed = discord.Embed(
+            title='Moderazione',
+            colour=discord.Color.blue())
+            embed.add_field(name='**Utente**', value=f'**{member.mention}**')
+            embed.add_field(name='**Comando eseguito**', value='**off-schiavo**')
+            embed.add_field(name='**Moderatore**', value=f'{ctx.message.author.mention}')
+            embed.add_field(name='**Motivo**', value=f'**{reason}**')
+            await channel.send(embed=embed)
+
+    else:
+        embed = discord.Embed(
+        title='Comando non eseguito.',
+        description='**Non hai i permessi speciali.**', 
+        colour=discord.Color.red())
+        await ctx.send(embed=embed)
+
+
+
+
+
+#@bot.command()
+#async def ping(ctx):
+    #await ctx.send('pong!', delete_after=5)
+
+#questo è il file python molto epico
+#di fred
+
+
+
+
+
+
+
+
+@bot.command()
+async def capashrek(ctx):
+  await ctx.message.delete()
+  await ctx.send(file=discord.File('FotoFighe/capashrek.jpeg'))
+
+@bot.command()
+async def servers(ctx):
+    servers = list(bot.guilds)
+    await ctx.send(f'Connesso in {len(bot.guilds)} server.')
+    await ctx.send(f"\n".join(
+        f'- `{server.name} - {server.id}`' for server in servers))
+
+keep_alive()
+TOKEN = os.environ.get("DISCORD_BOT_SECRET")
+bot.run(TOKEN)
